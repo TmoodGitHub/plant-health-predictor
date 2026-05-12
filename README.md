@@ -65,6 +65,7 @@ Open `.env` and add your Anthropic API key:
 ```
 ANTHROPIC_API_KEY=your_key_here
 PORT=3000
+CORS_ORIGIN=
 ```
 
 **4. Run the app**
@@ -87,7 +88,7 @@ http://localhost:3000
 2. Order them chronologically - oldest first, newest last
 3. Click **Analyze**
 4. Review the health report, patterns, and prediction
-5. Export the report as a text file if needed
+5. Export the report as a PDF if needed
 6. Past analyses are saved and accessible in the history panel
 
 ---
@@ -131,7 +132,9 @@ plant-health-predictor/
 ## Notes
 
 - Images are stored locally under `/uploads` organized by session ID
+- Uploaded images are not served publicly by the app
 - Analysis history is saved to `storage/analysis_history.json`
 - Neither uploads nor history are pushed to GitHub via `.gitignore`
 - Maximum 10 images per analysis, 5MB per image
 - Supported formats: JPEG, PNG, WEBP
+- Analysis requests are rate-limited per client IP
