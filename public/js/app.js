@@ -18,6 +18,35 @@ const historyGrid = document.getElementById('historyGrid');
 const exportBtn = document.getElementById('exportBtn');
 const clearBtn = document.getElementById('clearBtn');
 
+const clearElement = (element) => {
+  while (element.firstChild) {
+    element.removeChild(element.firstChild);
+  }
+};
+
+const appendTextElement = (parent, tagName, text, className) => {
+  const element = document.createElement(tagName);
+  if (className) {
+    element.className = className;
+  }
+  element.textContent = text;
+  parent.appendChild(element);
+  return element;
+};
+
+const appendListItems = (list, items) => {
+  clearElement(list);
+  const safeItems = Array.isArray(items) ? items : [];
+  safeItems.forEach((item) => {
+    appendTextElement(list, 'li', item);
+  });
+};
+
+const getHealthClass = (status) =>
+  String(status || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, '-');
+
 uploadZone.addEventListener('click', () =>
   fileInput.click(),
 );
@@ -61,16 +90,33 @@ const removeFile = (index) => {
 };
 
 const renderPreviews = () => {
-  previewGrid.innerHTML = '';
+  clearElement(previewGrid);
   state.files.forEach((file, index) => {
     const url = URL.createObjectURL(file);
     const item = document.createElement('div');
     item.className = 'preview-item';
-    item.innerHTML = `
-            <img src="${url}" alt="Plant image ${index + 1}" />
-            <div class="preview-label">Image ${index + 1}</div>
-            <button class="remove-btn" onclick="removeFile(${index})">x</button>
-        `;
+
+    const image = document.createElement('img');
+    image.src = url;
+    image.alt = `Plant image ${index + 1}`;
+    item.appendChild(image);
+
+    appendTextElement(
+      item,
+      'div',
+      `Image ${index + 1}`,
+      'preview-label',
+    );
+
+    const removeBtn = appendTextElement(
+      item,
+      'button',
+      'x',
+      'remove-btn',
+    );
+    removeBtn.type = 'button';
+    removeBtn.addEventListener('click', () => removeFile(index));
+
     previewGrid.appendChild(item);
   });
 };
@@ -125,7 +171,7 @@ const runAnalysis = async () => {
 
 const renderResults = (result) => {
   const {
-    plant_identification: plant,
+    plant_identification: plant = {},
     overall_health_score: score,
     health_status,
     observations,
@@ -150,32 +196,36 @@ const renderResults = (result) => {
 
   // plant ID
   document.getElementById('plantName').textContent =
-    `${plant.common_name} (${plant.scientific_name})`;
+    `${plant.common_name || 'Unknown'} (${plant.scientific_name || 'Unknown'})`;
   document.getElementById('plantFamily').textContent =
-    `Family: ${plant.family} - ID Confidence: ${plant.confidence}`;
+    `Family: ${plant.family || 'Unknown'} - ID Confidence: ${plant.confidence || 'Unknown'}`;
 
   // health badge
   const badge = document.getElementById('healthBadge');
   badge.textContent = health_status;
-  badge.className = `health-badge ${health_status.toLowerCase()}`;
+  badge.className = `health-badge ${getHealthClass(health_status)}`;
 
   // observations
-  document.getElementById('observationsList').innerHTML =
-    observations.map((o) => `<li>${o}</li>`).join('');
+  appendListItems(
+    document.getElementById('observationsList'),
+    observations,
+  );
 
   // patterns
-  document.getElementById('patternsList').innerHTML =
-    patterns_detected.map((p) => `<li>${p}</li>`).join('');
+  appendListItems(
+    document.getElementById('patternsList'),
+    patterns_detected,
+  );
 
   // prediction
   document.getElementById('predictionText').textContent =
     prediction;
 
   // actions
-  document.getElementById('actionsList').innerHTML =
-    recommended_actions
-      .map((a) => `<li>${a}</li>`)
-      .join('');
+  appendListItems(
+    document.getElementById('actionsList'),
+    recommended_actions,
+  );
 
   // confidence
   document.getElementById('confidenceLabel').textContent =
@@ -275,33 +325,66 @@ const loadHistory = async () => {
   try {
     const res = await fetch('/api/analyze/history');
     const data = await res.json();
+    clearElement(historyGrid);
 
     if (!data.success || data.history.length === 0) {
-      historyGrid.innerHTML = `<p style="color: var(--text-secondary)">No analyses yet.</p>`;
+      const empty = appendTextElement(
+        historyGrid,
+        'p',
+        'No analyses yet.',
+      );
+      empty.style.color = 'var(--text-secondary)';
       return;
     }
 
-    historyGrid.innerHTML = data.history
-      .map(
-        (entry) => `
-      <div class="history-card" onclick="loadHistoryEntry('${entry.id}')">
-        <div class="plant-name">${entry.plant_name}</div>
-        <div class="history-meta">
-          ${new Date(entry.timestamp).toLocaleString()} - 
-          ${entry.imageCount} image${entry.imageCount > 1 ? 's' : ''}
-        </div>
-        <div class="history-score">
-          <span class="health-badge ${entry.health_status.toLowerCase()}">
-            ${entry.health_status}
-          </span>
-          <span style="font-weight: 600; color: var(--primary-light)">
-            ${entry.overall_health_score}/10
-          </span>
-        </div>
-      </div>
-    `,
-      )
-      .join('');
+    data.history.forEach((entry) => {
+      const card = document.createElement('div');
+      card.className = 'history-card';
+      card.tabIndex = 0;
+      card.setAttribute('role', 'button');
+      card.addEventListener('click', () =>
+        loadHistoryEntry(entry.id),
+      );
+      card.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          loadHistoryEntry(entry.id);
+        }
+      });
+
+      appendTextElement(
+        card,
+        'div',
+        entry.plant_name || 'Unknown plant',
+        'plant-name',
+      );
+
+      appendTextElement(
+        card,
+        'div',
+        `${new Date(entry.timestamp).toLocaleString()} - ${entry.imageCount} image${entry.imageCount > 1 ? 's' : ''}`,
+        'history-meta',
+      );
+
+      const score = document.createElement('div');
+      score.className = 'history-score';
+      appendTextElement(
+        score,
+        'span',
+        entry.health_status || 'Unknown',
+        `health-badge ${getHealthClass(entry.health_status)}`,
+      );
+      const scoreValue = appendTextElement(
+        score,
+        'span',
+        `${entry.overall_health_score}/10`,
+      );
+      scoreValue.style.fontWeight = '600';
+      scoreValue.style.color = 'var(--primary-light)';
+      card.appendChild(score);
+
+      historyGrid.appendChild(card);
+    });
   } catch (error) {
     console.error('Failed to load history:', error);
   }
@@ -309,7 +392,9 @@ const loadHistory = async () => {
 
 const loadHistoryEntry = async (id) => {
   try {
-    const res = await fetch(`/api/analyze/history/${id}`);
+    const res = await fetch(
+      `/api/analyze/history/${encodeURIComponent(id)}`,
+    );
     const data = await res.json();
     if (data.success) {
       state.currentResult = data.entry;
