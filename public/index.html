@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Plant Health Predictor</title>
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body>
+    <div class="app-container">
+      <!-- Header -->
+      <header class="app-header">
+        <h1>Plant Health Predictor</h1>
+        <p>
+          Upload multiple photos of your plant over time and
+          get an AI-powered health analysis and prediction
+        </p>
+      </header>
+
+      <!-- Upload Section -->
+      <section class="upload-section">
+        <div class="upload-zone" id="uploadZone">
+          <span class="upload-icon">🌿</span>
+          <h3>Drop plant photos here</h3>
+          <p>
+            Upload 2-10 images in chronological order -
+            oldest first, newest last
+          </p>
+          <p
+            style="
+              margin-top: 8px;
+              font-size: 0.8rem;
+              color: var(--text-muted);
+            "
+          >
+            JPEG, PNG, WEBP up to 5MB each
+          </p>
+          <input
+            type="file"
+            id="fileInput"
+            multiple
+            accept="image/jpeg,image/png,image/webp"
+          />
+        </div>
+
+        <!-- Image Previews -->
+        <div class="preview-grid" id="previewGrid"></div>
+
+        <!-- Analyze Button -->
+        <button
+          class="analyze-btn"
+          id="analyzeBtn"
+          disabled
+        >
+          <span>🔍</span>
+          <span class="btn-text"
+            >Upload at least 2 images to analyze</span
+          >
+        </button>
+      </section>
+
+      <!-- Loading -->
+      <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p class="loading-text">
+          Analyzing your plant across all images...
+        </p>
+      </div>
+
+      <!-- Results -->
+      <section class="results-section" id="resultsSection">
+        <!-- Result Header -->
+        <div class="result-header">
+          <h2>Analysis Results</h2>
+          <div
+            style="
+              display: flex;
+              gap: 12px;
+              align-items: center;
+            "
+          >
+            <span
+              class="health-badge"
+              id="healthBadge"
+            ></span>
+            <button class="export-btn" id="exportBtn">
+              <span>📄</span> Export Report
+            </button>
+          </div>
+        </div>
+
+        <!-- Score Ring -->
+        <div class="score-ring-container">
+          <div class="score-ring">
+            <svg
+              width="100"
+              height="100"
+              viewBox="0 0 100 100"
+            >
+              <circle
+                cx="50"
+                cy="50"
+                r="40"
+                fill="none"
+                stroke="var(--border)"
+                stroke-width="8"
+              />
+              <circle
+                id="scoreRingCircle"
+                cx="50"
+                cy="50"
+                r="40"
+                fill="none"
+                stroke="var(--primary-light)"
+                stroke-width="8"
+                stroke-linecap="round"
+                style="
+                  transition: stroke-dashoffset 1s ease;
+                "
+              />
+            </svg>
+            <div class="score-text" id="scoreValue">0</div>
+          </div>
+          <div class="score-details">
+            <h2 id="plantName"></h2>
+            <p id="plantFamily"></p>
+          </div>
+        </div>
+
+        <!-- Cards Grid -->
+        <div class="cards-grid">
+          <!-- Observations -->
+          <div class="card">
+            <h3>📸 Per-Image Observations</h3>
+            <ul id="observationsList"></ul>
+          </div>
+
+          <!-- Patterns -->
+          <div class="card">
+            <h3>🔎 Patterns Detected</h3>
+            <ul id="patternsList"></ul>
+          </div>
+
+          <!-- Recommended Actions -->
+          <div class="card">
+            <h3>✅ Recommended Actions</h3>
+            <ul id="actionsList"></ul>
+          </div>
+
+          <!-- Confidence -->
+          <div class="card">
+            <h3>📊 Confidence</h3>
+            <p
+              id="confidenceLabel"
+              style="font-weight: 600; margin-bottom: 8px"
+            ></p>
+            <div class="confidence-bar">
+              <div
+                class="confidence-bar-fill"
+                id="confidenceBarFill"
+                style="width: 0%"
+              ></div>
+            </div>
+            <p
+              id="confidenceReasoning"
+              style="
+                font-size: 0.85rem;
+                color: var(--text-secondary);
+                margin-top: 8px;
+              "
+            ></p>
+          </div>
+        </div>
+
+        <!-- Prediction -->
+        <div class="card prediction-card">
+          <h3>🔮 Prediction - Next 7-14 Days</h3>
+          <p id="predictionText"></p>
+        </div>
+      </section>
+
+      <!-- History Section -->
+      <section class="history-section">
+        <div class="history-header">
+          <h2>Past Analyses</h2>
+          <button class="clear-btn" id="clearBtn">
+            Clear History
+          </button>
+        </div>
+        <div class="history-grid" id="historyGrid">
+          <p style="color: var(--text-secondary)">
+            No analyses yet.
+          </p>
+        </div>
+      </section>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="/js/app.js"></script>
+  </body>
+</html>
